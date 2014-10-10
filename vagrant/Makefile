@@ -15,6 +15,8 @@ ifneq ("$(wildcard $(MAKE_CONFIG_FILE))", "")
    REDCAP_SQL_PATCHES_FOLDER := $(CONFIG_FOLDER_VAGRANT)/sqlPatches
    ENROLLMENT_CSV_FILE  := $(CONFIG_FOLDER_VAGRANT)/enrollment_test_data.csv
    REFERENCE_OUTPUT_FILE:= $(CONFIG_FOLDER_VAGRANT)/redi_out_reference.csv
+   GENERATE_INPUT_SCRIPT:= $(CONFIG_FOLDER_VAGRANT)/generate_enrollment.sh
+   NUMBER_OF_RECORDS_TO_ENROLL:= $(shell cat ${MAKE_CONFIG_FILE} | grep 'number_of_records_for_enrollment' | cut -d = -f2 | tr -d ' ')
 
    REDCAP_API_URI := $(shell cat ${CONFIG_FILE} | sed -e 's/ //g' | grep -v '^\#' | grep 'redcap_uri=' | cut -d '=' -f2)
    REDCAP_VM_URI := $(subst api/,,$(REDCAP_API_URI))
@@ -78,6 +80,7 @@ check_config:
 	@test -f $(REDCAP_DB_SQL_FILE) || (echo 'Please obtain the project sql dump file "$(REDCAP_DB_SQL_FILE)"' && exit 1)
 	@test -f $(REDCAP_CODE_ZIP_FILE) || (echo 'Please obtain the redcap software zip file "$(REDCAP_CODE_ZIP_FILE)"' && exit 1)
 	@test -f $(ENROLLMENT_CSV_FILE) || (echo 'Config error: missing file "$(ENROLLMENT_CSV_FILE)"' && exit 1)
+	@test -f $(GENERATE_INPUT_SCRIPT) || (echo 'Config error: missing file "$(GENERATE_INPUT_SCRIPT)"' && exit 1)
 
 show_config: check_config
 	@echo "$(MAKE_CONFIG_FILE) indicates that extra parameters should be read from : $(CONFIG_FILE)"
@@ -111,6 +114,7 @@ rc_clean:
 	vagrant ssh -c 'cd /vagrant/scripts && php redcapdbm.php -d $(REDCAP_PROJECT_ID)'
 
 rc_enrollment: check_config
+	$(shell sh $(GENERATE_INPUT_SCRIPT) $(NUMBER_OF_RECORDS_TO_ENROLL) $(ENROLLMENT_CSV_FILE))
 	$(REDCAP_RECORDS_CMD) -i $(ENROLLMENT_CSV_FILE)
 
 rc_post:
