@@ -80,7 +80,6 @@ check_config:
 	@test -f $(REDCAP_DB_SQL_FILE) || (echo 'Please obtain the project sql dump file "$(REDCAP_DB_SQL_FILE)"' && exit 1)
 	@test -f $(REDCAP_CODE_ZIP_FILE) || (echo 'Please obtain the redcap software zip file "$(REDCAP_CODE_ZIP_FILE)"' && exit 1)
 	@test -f $(ENROLLMENT_CSV_FILE) || (echo 'Config error: missing file "$(ENROLLMENT_CSV_FILE)"' && exit 1)
-	@test -f $(GENERATE_INPUT_SCRIPT) || (echo 'Config error: missing file "$(GENERATE_INPUT_SCRIPT)"' && exit 1)
 
 show_config: check_config
 	@echo "$(MAKE_CONFIG_FILE) indicates that extra parameters should be read from : $(CONFIG_FILE)"
@@ -114,7 +113,7 @@ rc_clean:
 	vagrant ssh -c 'cd /vagrant/scripts && php redcapdbm.php -d $(REDCAP_PROJECT_ID)'
 
 rc_enrollment: check_config
-	$(shell sh $(GENERATE_INPUT_SCRIPT) $(NUMBER_OF_RECORDS_TO_ENROLL) $(ENROLLMENT_CSV_FILE))
+	$(shell [ -f $(GENERATE_INPUT_SCRIPT) ] && $(GENERATE_INPUT_SCRIPT) $(NUMBER_OF_RECORDS_TO_ENROLL) $(ENROLLMENT_CSV_FILE))
 	$(REDCAP_RECORDS_CMD) -i $(ENROLLMENT_CSV_FILE)
 
 rc_post:
